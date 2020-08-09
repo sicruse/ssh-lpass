@@ -1,0 +1,8 @@
+Host *
+        IdentityFile ~/.ssh/sicruse_rsa
+        ControlPath ~/.ssh/control-%h-%p-%r
+        ControlMaster auto
+        ControlPersist yes
+        ServerAliveInterval 10
+        UseRoaming no
+        UseKeychain yes
