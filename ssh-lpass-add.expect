@@ -1,0 +1,15 @@
+#!/usr/bin/expect -f
+
+set KEY_DIR [lindex $argv 0];
+set KEY_ID [lindex $argv 1];
+set KEY_NAME [lindex $argv 2];
+
+# shell out and grab our passphrase
+set PASSWORD [exec lpass show --field=Passphrase ${KEY_ID}];
+
+# after we scoop up the password from execing it we can use it
+spawn ssh-add $KEY_DIR/$KEY_NAME.rsa
+expect "Enter passphrase for $KEY_DIR/${KEY_NAME}_rsa:"
+send "$PASSWORD\n";
+expect "Identity added:"
+interact

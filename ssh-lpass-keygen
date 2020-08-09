@@ -1,0 +1,60 @@
+#!/bin/bash
+
+# KEY_NAME=test-ssh-$(date "+%m-%d-%Y")
+KEY_NAME=$1
+
+# perform sanity check - does such a managed ssh key already exist?
+echo "Checking if key already exists..."
+KEY_ID=$(lpass ls "Secure Notes\SSH\managed/${KEY_NAME}" | grep "id:" | awk -F ":" '{ print $2 }'| rev | cut -c 2- | rev)
+
+if [ -z "$KEY_ID" ]
+then
+    # generate passphrases
+    echo "Generating passphrase..."
+    PASSPHRASE=$(lpass generate TEMP/temp-gen-${KEY_NAME} 64)
+
+    # create the ssh key with the passphrase from lastpass
+    echo "Creating local ssh key using generated passphrase..."
+    ssh-keygen -b 4096 -t rsa -q \
+      -C "ssh-lpass-managed - ${KEY_NAME}" \
+      -f ~/.ssh/"${KEY_NAME}"_rsa \
+      -N "${PASSPHRASE}"
+      # -N "$(lpass show "Secure Notes\SSH\managed/${KEY_NAME}" --field=Passphrase)"
+
+    # create a lastpass ssh-key note
+    echo "Creating lastpass SSH entry with generated passphrase..."
+    # --sync=now \
+    lpass add \
+      --non-interactive \
+      --note-type=ssh-key \
+      "Secure Notes\SSH\managed/${KEY_NAME}" <<EOF
+    Passphrase: ${PASSPHRASE}
+    NoteType: SSH Key
+    Private Key: $(cat ~/.ssh/"${KEY_NAME}"_rsa)
+    Public Key: $(cat ~/.ssh/"${KEY_NAME}"_rsa.pub)
+    Bit Strength: 4096
+    Format: rsa
+    Date: $(date "+%b,%d,%Y")
+    Hostname:
+EOF
+
+#     # edit the LastPass entry with the public and private key contents
+#     # lpass edit --sync=now --non-interactive "Secure Notes\SSH\managed/${KEY_NAME}" <<EOF
+#     lpass edit --non-interactive "Secure Notes\SSH\managed/${KEY_NAME}" <<EOF
+#     Private Key: $(cat ~/.ssh/"${KEY_NAME}".rsa)
+#     Public Key: $(cat ~/.ssh/"${KEY_NAME}".rsa.pub)
+# EOF
+
+    echo "Cleaning up..."
+    lpass rm TEMP/temp-gen-${KEY_NAME}
+    # for i in `lpass ls TEMP | grep "id:" | awk -F ":" '{ print $2 }'| rev | cut -c 2- | rev`
+    # do
+    #   # lpass rm --sync=now $i
+    #   lpass rm $i
+    # done
+
+    lpass sync
+
+else
+    echo "Error: lastpass ssh key for ${KEY_NAME} already exists!"
+fi

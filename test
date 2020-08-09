@@ -1,0 +1,10 @@
+#!/bin/bash
+
+TDIR=`mktemp -d`
+for i in `lpass ls "Secure Notes\SSH\managed" | grep "id:" | awk -F ":" '{ print $2 }'| rev | cut -c 2- | rev`
+do
+    echo "$i"
+    lpass show $i
+    # lpass show --field="Private Key" $i
+    # lpass show --field="Public Key" $i
+done

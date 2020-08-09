@@ -1,0 +1,19 @@
+#!/bin/bash
+
+echo "Removing managed lpass temp passphrases..."
+for i in `lpass ls TEMP | grep "id:" | awk -F ":" '{ print $2 }'| rev | cut -c 2- | rev`
+do
+  # lpass rm --sync=now $i
+  lpass rm $i
+done
+
+echo "Removing managed lpass ssh keys..."
+for i in `lpass ls "Secure Notes\SSH\managed" | grep "id:" | awk -F ":" '{ print $2 }'| rev | cut -c 2- | rev`
+do
+  lpass rm $i
+done
+
+echo "Removing ssh keys..."
+rm ~/.ssh/*
+
+lpass sync

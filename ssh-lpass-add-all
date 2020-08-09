@@ -1,0 +1,11 @@
+#!/bin/bash
+
+TDIR=`mktemp -d`
+for i in `lpass ls "Secure Notes\SSH\managed" | grep "id:" | awk -F ":" '{ print $2 }'| rev | cut -c 2- | rev`
+do
+    NAME=`lpass show -j $i | jq -r '.[0].name'`
+    lpass show --field="Private Key" $i > ${TDIR}/${NAME}_rsa
+    lpass show --field="Public Key" $i > ${TDIR}/${NAME}_rsa.pub
+    chmod 600 ${TDIR}/*
+    expect ssh-lpass-add.expect ${TDIR} $i $NAME
+done
